@@ -1,8 +1,9 @@
 import re
+from app.schema.coref import item
 
 BJP_PATTERNS = [
     r"\bbjp\b", r"\bbharatiya janata party\b", r"\bnda\b", r"\bmodi\b",
-    r"\bamit shah\b", r"\bjp nadda\b", r"\byogi\b"
+    r"\bamit shah\b", r"\bjp nadda\b", r"\byogi\b", r"\bYogi Adityanath\b"
 ]
 CONGRESS_PATTERNS = [
     r"\bcongress\b", r"\bindian national congress\b", r"\binc\b", r"\bupa\b",
@@ -28,36 +29,47 @@ def party_relevance(text: str):
     return label
 
 
+
+
 def sent_tokenizer(text):
     stack = []
     sentences = []
     current_sentence = ""
+
     for char in text:
         current_sentence += char
+
         if char in ['"', '“', '”']:
-            if stack and stack[-1] == char:
+            if stack:
                 stack.pop()
             else:
                 stack.append(char)
-        elif char == '.' and not stack:
+
+
+        elif char in ['.', '!', '?'] and not stack:
             sentences.append(current_sentence.strip())
             current_sentence = ""
+
+    # ✅ Important: add last sentence
+    if current_sentence.strip():
+        sentences.append(current_sentence.strip())
+
     return sentences
 
-text1 = (
-        """Prime Minister Narendra Modi on Sunday said that he is committed to fulfil the responsibilities placed on him by Indian voters who chose to make him the nation's watchman five years ago. "I will not let anybody paw at your money under my guard. It is my responsibility as the chowkidar to make sure that the nation's wealth is safe," PM Modi told an ecstatic crowd of supporters in Delhi's Talkatora Stadium at 5 pm. The event was held as part of the BJP's Main Bhi Chowkidar campaign, 10 days ahead of the Lok Sabha elections. The Prime Minister, however, stressed that he was not the only watchman standing guard over the nation. "Every Indian - whether he is outside the country, whether he is educated or uneducated, whether he is young or old - is a chowkidar," he declared. "The country's poor and the ordinary citizen who pays tax, they all have a stake in this." PM Modi took the opportunity to poke fun at opposition parties, who are scrambling to form an alliance against his party. "I have been criticised ever since I first decided to run for Prime Minister in 2014. However, these very critics were the ones who popularised me by targeting every move I made," he said, claiming that some people have "intellectual limitations". The bulk of his criticism was reserved for the Congress. "The Congress' lies are seasonal. When Delhi went to the polls, they began spreading lies about attacks on churches. They began chanting intolerance, intolerance. But the allegations of intolerance ended with the elections," he claimed. The Prime Minister also "saluted" the Indian Air Force for carrying out strikes in Pakistan's Balakot in the wake for the Pulwama terror attack. "Pakistan is in a fix because if it acknowledges the air strikes, it will have to accept that a terror camp existed there," he said. Earlier on Sunday, PM Modi had tweeted a curtain-raiser for his event at Talkatora stadium. "The day we were most looking forward to is here! At 5 pm, lakhs of Chowkidars from different parts of India will interact in the historic Main Bhi Chowkidar programme. This is an interaction you must not miss," he posted. The Main Bhi Chowkidar campaign was launched by PM Modi on March 16. A day after the launch, he led BJP leaders across the country in adding the prefix "chowkidar" to their Twitter handles."""
-    )
 def Ner_function(text):
     sentences = sent_tokenizer(text)
     ner_list=[]
+
     for sentence in sentences:
         rel = party_relevance(sentence)
         if rel not in ["none", "both"]:
-            ner_list.append((sentence, rel))
+            ner_list.append(item(sent=sentence, label=rel))
         elif rel =="both":
-            ner_list.append((sentence, "bjp"))
-            ner_list.append((sentence, "congress"))
+            ner_list.append(item(sent=sentence, label="bjp"))
+            ner_list.append(item(sent=sentence, label="congress"))
+        else:            
+            ner_list.append(item(sent=sentence, label="none"))
     return ner_list
 
 
-ner_output = Ner_function(text1)
+# ner_output = Ner_function(text1)

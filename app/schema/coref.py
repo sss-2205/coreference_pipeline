@@ -1,4 +1,3 @@
-from xxlimited import Str
 from pydantic import BaseModel, HttpUrl
 from typing import List
 
