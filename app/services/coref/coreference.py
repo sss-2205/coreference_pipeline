@@ -1,11 +1,13 @@
 from app.schema.coref import Coref_Article, Article
 from app.services.coref.coreferee_code import resolve_text, build_nlp
+from app.services.coref.ner import Ner_function
 import spacy
 import coreferee
 import re
 
 def ready_data(data: Article) -> Coref_Article:
     chains, resolved_text = resolve_text(data.content, build_nlp())
+    ner_list = Ner_function(resolved_text)
 
     # Convert spans into JSON-friendly format
     json_chains = []
@@ -23,7 +25,8 @@ def ready_data(data: Article) -> Coref_Article:
     data_out = Coref_Article(
         content=resolved_text,
         url=data.url,
-        chains=json_chains
+        chains=json_chains,
+        ner_list=ner_list
     )
     return data_out
 
